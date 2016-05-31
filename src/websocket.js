@@ -1,4 +1,6 @@
-class WebSocketWrapper {
+'use strict';
+
+export default class WebSocketWrapper {
   constructor(url, protocols) {
     this._url = url;
     this._protocols = protocols;
@@ -182,5 +184,3 @@ class WebSocketWrapper {
     return this.websocket.CLOSED;
   }
 }
-
-module.exports = WebSocketWrapper;
