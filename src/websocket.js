@@ -33,6 +33,7 @@ export default class WebSocketWrapper {
 
     this.websocket = null;
     this.attempts = 0;
+
     clearTimeout(this.timeout);
   }
 
@@ -43,7 +44,7 @@ export default class WebSocketWrapper {
   bindSocket() {
     this.websocket.onclose = this.handleClose.bind(this);
     this.websocket.onerror = this.handleError.bind(this);
-    this.websocket.onmessage = this._onmessage;
+    this.websocket.onmessage = this.handleMessage.bind(this);
     this.websocket.onopen = this.handleOpen.bind(this);
   }
 
@@ -60,6 +61,12 @@ export default class WebSocketWrapper {
     }
 
     this.attempts = 0;
+  }
+
+  handleMessage(event) {
+    if (this._onmessage) {
+      this._onmessage(event);
+    }
   }
 
   handleError(event) {
@@ -145,7 +152,6 @@ export default class WebSocketWrapper {
 
   set onmessage(listener) {
     this._onmessage = listener;
-    this.websocket.onmessage = listener;
   }
 
   get onopen() {
