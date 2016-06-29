@@ -1,5 +1,7 @@
 'use strict';
 
+import { bind, unbind } from '@scola/bind';
+
 export default class WebSocketWrapper {
   constructor(url, protocols) {
     this._url = url;
@@ -11,9 +13,9 @@ export default class WebSocketWrapper {
     this._onerror = null;
     this._onmessage = null;
 
-    this.websocket = null;
-    this.attempts = 0;
-    this.timeout = null;
+    this._websocket = null;
+    this._attempts = 0;
+    this._timeout = null;
 
     this.maxAttempts = 10;
     this.codes = [1000, 1001, 1006];
@@ -22,55 +24,64 @@ export default class WebSocketWrapper {
   }
 
   open() {
-    this.websocket = new WebSocket(this._url, this._protocols);
-    this.websocket.binaryType = this._binaryType;
-    this.bindSocket();
+    this._websocket = new WebSocket(this._url, this._protocols);
+    this._websocket.binaryType = this._binaryType;
+    this._bindSocket();
   }
 
   close(code, reason) {
-    this.websocket.close(code, reason);
-    this.unbindSocket();
+    this._websocket.close(code, reason);
+    this._unbindSocket();
 
-    this.websocket = null;
-    this.attempts = 0;
+    clearTimeout(this._timeout);
 
-    clearTimeout(this.timeout);
+    this._websocket = null;
+    this._attempts = 0;
+    this._timeout = null;
   }
 
   send(data) {
-    this.websocket.send(data);
+    this._websocket.send(data);
   }
 
-  bindSocket() {
-    this.websocket.onclose = this.handleClose.bind(this);
-    this.websocket.onerror = this.handleError.bind(this);
-    this.websocket.onmessage = this.handleMessage.bind(this);
-    this.websocket.onopen = this.handleOpen.bind(this);
+  addEventListener(type, listener) {
+    this._websocket.addEventListener(type, listener);
   }
 
-  unbindSocket() {
-    this.websocket.onclose = null;
-    this.websocket.onerror = null;
-    this.websocket.onmessage = null;
-    this.websocket.onopen = null;
+  removeEventListener(type, listener) {
+    this._websocket.removeEventListener(type, listener);
   }
 
-  handleOpen() {
+  _bindSocket() {
+    bind(this, this._websocket, 'close', this._handleClose);
+    bind(this, this._websocket, 'error', this._handleError);
+    bind(this, this._websocket, 'message', this._handleMessage);
+    bind(this, this._websocket, 'open', this._handleOpen);
+  }
+
+  _unbindSocket() {
+    unbind(this, this._websocket, 'close', this._handleClose);
+    unbind(this, this._websocket, 'error', this._handleError);
+    unbind(this, this._websocket, 'message', this._handleMessage);
+    unbind(this, this._websocket, 'open', this._handleOpen);
+  }
+
+  _handleOpen() {
     if (this._onopen) {
-      this._onopen(this.attempts);
+      this._onopen(this._attempts);
     }
 
-    this.attempts = 0;
+    this._attempts = 0;
   }
 
-  handleMessage(event) {
+  _handleMessage(event) {
     if (this._onmessage) {
       this._onmessage(event);
     }
   }
 
-  handleError(event) {
-    if (this.websocket.readyState === this.websocket.CLOSED) {
+  _handleError(event) {
+    if (this._websocket.readyState === this._websocket.CLOSED) {
       return;
     }
 
@@ -79,29 +90,29 @@ export default class WebSocketWrapper {
     }
   }
 
-  handleClose(event) {
-    this.unbindSocket();
+  _handleClose(event) {
+    this._unbindSocket();
 
-    if (this.attempts === this.maxAttempts && this._onclose) {
+    if (this._attempts === this.maxAttempts && this._onclose) {
       event.final = true;
       this._onclose(event);
     }
 
-    if (this.attempts === 0 && this._onclose) {
+    if (this._attempts === 0 && this._onclose) {
       this._onclose(event);
     }
 
     if (this.codes.indexOf(event.code) !== -1 &&
-      this.attempts < this.maxAttempts) {
+      this._attempts < this.maxAttempts) {
 
-      this.handleReconnect(event);
+      this._handleReconnect(event);
       return;
     }
   }
 
-  handleReconnect(event) {
-    let delay = Math.pow(2, this.attempts);
-    this.attempts += 1;
+  _handleReconnect(event) {
+    let delay = Math.pow(2, this._attempts);
+    this._attempts += 1;
 
     if (event.reason) {
       const match = event.reason.match(/delay=(\d+)/);
@@ -111,23 +122,23 @@ export default class WebSocketWrapper {
       }
     }
 
-    this.timeout = setTimeout(this.open.bind(this), delay * 1000);
+    this._timeout = setTimeout(this.open.bind(this), delay * 1000);
   }
 
   get binaryType() {
-    return this.websocket.binaryType;
+    return this._websocket.binaryType;
   }
 
   set binaryType(binaryType) {
-    this.websocket.binaryType = binaryType;
+    this._websocket.binaryType = binaryType;
   }
 
   get bufferedAmount() {
-    return this.websocket.bufferedAmount;
+    return this._websocket.bufferedAmount;
   }
 
   get extensions() {
-    return this.websocket.extensions;
+    return this._websocket.extensions;
   }
 
   get onclose() {
@@ -163,30 +174,30 @@ export default class WebSocketWrapper {
   }
 
   get protocol() {
-    return this.websocket.protocol;
+    return this._websocket.protocol;
   }
 
   get readyState() {
-    return this.websocket.readyState;
+    return this._websocket.readyState;
   }
 
   get url() {
-    return this.websocket.url;
+    return this._websocket.url;
   }
 
   get CONNECTING() {
-    return this.websocket.CONNECTING;
+    return this._websocket.CONNECTING;
   }
 
   get OPEN() {
-    return this.websocket.OPEN;
+    return this._websocket.OPEN;
   }
 
   get CLOSING() {
-    return this.websocket.CLOSING;
+    return this._websocket.CLOSING;
   }
 
   get CLOSED() {
-    return this.websocket.CLOSED;
+    return this._websocket.CLOSED;
   }
 }
