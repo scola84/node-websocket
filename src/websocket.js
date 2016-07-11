@@ -130,6 +130,7 @@ export default class WebSocketWrapper {
   }
 
   set binaryType(binaryType) {
+    this._binaryType = binaryType;
     this._websocket.binaryType = binaryType;
   }
 
