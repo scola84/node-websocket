@@ -8,10 +8,10 @@ export default class WebSocketWrapper {
     this._protocols = protocols;
     this._binaryType = 'blob';
 
-    this._onclose = null;
-    this._onopen = null;
-    this._onerror = null;
-    this._onmessage = null;
+    this._onclose = new Set();
+    this._onopen = new Set();
+    this._onerror = new Set();
+    this._onmessage = new Set();
 
     this._websocket = null;
     this._attempts = 0;
@@ -45,11 +45,15 @@ export default class WebSocketWrapper {
   }
 
   addEventListener(type, listener) {
-    this._websocket.addEventListener(type, listener);
+    this['_on' + type].add(listener);
   }
 
   removeEventListener(type, listener) {
-    this._websocket.removeEventListener(type, listener);
+    this['_on' + type].forEach((registered) => {
+      if (registered === listener) {
+        this['_on' + type].delete(listener);
+      }
+    });
   }
 
   _bindSocket() {
@@ -67,17 +71,17 @@ export default class WebSocketWrapper {
   }
 
   _handleOpen() {
-    if (this._onopen) {
-      this._onopen(this._attempts);
-    }
+    this._onopen.forEach((listener) => {
+      listener(this._attempts);
+    });
 
     this._attempts = 0;
   }
 
   _handleMessage(event) {
-    if (this._onmessage) {
-      this._onmessage(event);
-    }
+    this._onmessage.forEach((listener) => {
+      listener(event);
+    });
   }
 
   _handleError(event) {
@@ -85,21 +89,20 @@ export default class WebSocketWrapper {
       return;
     }
 
-    if (this._onerror) {
-      this._onerror(event);
-    }
+    this._onerror.forEach((listener) => {
+      listener(event);
+    });
   }
 
   _handleClose(event) {
     this._unbindSocket();
 
-    if (this._attempts === this.maxAttempts && this._onclose) {
-      event.final = true;
-      this._onclose(event);
-    }
+    if (this._attempts === 0 || this._attempts === this.maxAttempts) {
+      event.final = this._attempts === this.maxAttempts;
 
-    if (this._attempts === 0 && this._onclose) {
-      this._onclose(event);
+      this._onclose.forEach((listener) => {
+        listener(event);
+      });
     }
 
     if (this.codes.indexOf(event.code) !== -1 &&
@@ -143,35 +146,39 @@ export default class WebSocketWrapper {
   }
 
   get onclose() {
-    return this._onclose;
+    return [...this._onclose][0];
   }
 
   set onclose(listener) {
-    this._onclose = listener;
+    this._onclose.clear();
+    this._onclose.add(listener);
   }
 
   get onerror() {
-    return this._onclose;
+    return [...this._onerror][0];
   }
 
   set onerror(listener) {
-    this._onerror = listener;
+    this._onerror.clear();
+    this._onerror.add(listener);
   }
 
   get onmessage() {
-    return this._onmessage;
+    return [...this._onmessage][0];
   }
 
   set onmessage(listener) {
-    this._onmessage = listener;
+    this._onmessage.clear();
+    this._onmessage.add(listener);
   }
 
   get onopen() {
-    return this._onopen;
+    return [...this._onopen][0];
   }
 
   set onopen(listener) {
-    this._onopen = listener;
+    this._onopen.clear();
+    this._onopen.add(listener);
   }
 
   get protocol() {
