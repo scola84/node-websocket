@@ -3,15 +3,18 @@
 import { bind, unbind } from '@scola/bind';
 
 export default class WebSocketWrapper {
-  constructor(url, protocols) {
+  constructor(url, protocols, wsClass = WebSocket) {
     this._url = url;
     this._protocols = protocols;
-    this._binaryType = 'blob';
+    this._binaryType = typeof WebSocket === 'undefined' ?
+      'nodebuffer' : 'blob';
 
     this._onclose = new Set();
     this._onopen = new Set();
     this._onerror = new Set();
     this._onmessage = new Set();
+
+    this._class = wsClass;
 
     this._websocket = null;
     this._attempts = 0;
@@ -24,7 +27,7 @@ export default class WebSocketWrapper {
   }
 
   open() {
-    this._websocket = new WebSocket(this._url, this._protocols);
+    this._websocket = new this._class(this._url, this._protocols);
     this._websocket.binaryType = this._binaryType;
     this._bindSocket();
   }
@@ -95,6 +98,13 @@ export default class WebSocketWrapper {
   }
 
   _handleClose(event) {
+    if (typeof event === 'number') {
+      event = {
+        code: event,
+        reason: arguments[1]
+      };
+    }
+
     this._unbindSocket();
 
     if (this._attempts === 0 || this._attempts === this.maxAttempts) {
