@@ -1,7 +1,3 @@
-'use strict';
-
-import { bind, unbind } from '@scola/bind';
-
 export default class WebSocketWrapper {
   constructor(url, protocols, wsClass = WebSocket) {
     this._url = url;
@@ -23,12 +19,21 @@ export default class WebSocketWrapper {
     this.maxAttempts = 10;
     this.codes = [1000, 1001, 1006];
 
+    this._handleClose = (e) => this._close(e);
+    this._handleError = (e) => this._error(e);
+    this._handleMessage = (e) => this._message(e);
+    this._handleOpen = (e) => this._open(e);
+
     this.open();
   }
 
   open() {
     this._websocket = new this._class(this._url, this._protocols);
+
     this._websocket.binaryType = this._binaryType;
+    this._websocket.removeEventListener =
+      this._websocket.removeEventListener || this._websocket.removeListener;
+
     this._bindSocket();
   }
 
@@ -51,6 +56,10 @@ export default class WebSocketWrapper {
     this['_on' + type].add(listener);
   }
 
+  addListener(type, listener) {
+    this.addEventListener(type, listener);
+  }
+
   removeEventListener(type, listener) {
     this['_on' + type].forEach((registered) => {
       if (registered === listener) {
@@ -59,21 +68,25 @@ export default class WebSocketWrapper {
     });
   }
 
+  removeListener(type, listener) {
+    this.removeEventListener(type, listener);
+  }
+
   _bindSocket() {
-    bind(this, this._websocket, 'close', this._handleClose);
-    bind(this, this._websocket, 'error', this._handleError);
-    bind(this, this._websocket, 'message', this._handleMessage);
-    bind(this, this._websocket, 'open', this._handleOpen);
+    this._websocket.addEventListener('close', this._handleClose);
+    this._websocket.addEventListener('error', this._handleError);
+    this._websocket.addEventListener('message', this._handleMessage);
+    this._websocket.addEventListener('open', this._handleOpen);
   }
 
   _unbindSocket() {
-    unbind(this, this._websocket, 'close', this._handleClose);
-    unbind(this, this._websocket, 'error', this._handleError);
-    unbind(this, this._websocket, 'message', this._handleMessage);
-    unbind(this, this._websocket, 'open', this._handleOpen);
+    this._websocket.removeEventListener('close', this._handleClose);
+    this._websocket.removeEventListener('error', this._handleError);
+    this._websocket.removeEventListener('message', this._handleMessage);
+    this._websocket.removeEventListener('open', this._handleOpen);
   }
 
-  _handleOpen() {
+  _open() {
     this._onopen.forEach((listener) => {
       listener(this._attempts);
     });
@@ -81,13 +94,13 @@ export default class WebSocketWrapper {
     this._attempts = 0;
   }
 
-  _handleMessage(event) {
+  _message(event) {
     this._onmessage.forEach((listener) => {
       listener(event);
     });
   }
 
-  _handleError(event) {
+  _error(event) {
     if (this._websocket.readyState === this._websocket.CLOSED) {
       return;
     }
@@ -97,7 +110,7 @@ export default class WebSocketWrapper {
     });
   }
 
-  _handleClose(event) {
+  _close(event) {
     if (typeof event === 'number') {
       event = {
         code: event,
@@ -118,12 +131,12 @@ export default class WebSocketWrapper {
     if (this.codes.indexOf(event.code) !== -1 &&
       this._attempts < this.maxAttempts) {
 
-      this._handleReconnect(event);
+      this._reconnect(event);
       return;
     }
   }
 
-  _handleReconnect(event) {
+  _reconnect(event) {
     let delay = Math.pow(2, this._attempts);
     this._attempts += 1;
 
@@ -135,7 +148,7 @@ export default class WebSocketWrapper {
       }
     }
 
-    this._timeout = setTimeout(this.open.bind(this), delay * 1000);
+    this._timeout = setTimeout(() => this.open(), delay * 1000);
   }
 
   get binaryType() {
