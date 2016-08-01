@@ -6,11 +6,11 @@
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
   "license": "MIT",
   "main": "./dist/websocket.js",
-  "jsnext:main": "./src/websocket.js",
+  "jsnext:main": "./index.js",
   "devDependencies": {
     "rollup": "^0.26.3"
   },
   "scripts": {
-    "build": "rollup -i ./src/websocket.js -o ./dist/websocket.js -f cjs"
+    "build": "rollup -i ./index.js -o ./dist/websocket.js -f cjs"
   }
 }
