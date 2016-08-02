@@ -86,9 +86,11 @@ export default class WebSocketWrapper {
     this._websocket.removeEventListener('open', this._handleOpen);
   }
 
-  _open() {
+  _open(event) {
+    event.attempts = this._attempts;
+
     this._onopen.forEach((listener) => {
-      listener(this._attempts);
+      listener(event);
     });
 
     this._attempts = 0;
@@ -111,13 +113,6 @@ export default class WebSocketWrapper {
   }
 
   _close(event) {
-    if (typeof event === 'number') {
-      event = {
-        code: event,
-        reason: arguments[1]
-      };
-    }
-
     this._unbindSocket();
 
     if (this._attempts === 0 || this._attempts === this.maxAttempts) {
