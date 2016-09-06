@@ -38,8 +38,8 @@ export default class WebSocketWrapper {
   }
 
   close(code, reason) {
-    this._websocket.close(code, reason);
     this._unbindSocket();
+    this._websocket.close(code, reason);
 
     clearTimeout(this._timeout);
 
@@ -150,9 +150,9 @@ export default class WebSocketWrapper {
     return this._websocket.binaryType;
   }
 
-  set binaryType(binaryType) {
-    this._binaryType = binaryType;
-    this._websocket.binaryType = binaryType;
+  set binaryType(value) {
+    this._binaryType = value;
+    this._websocket.binaryType = value;
   }
 
   get bufferedAmount() {
@@ -164,7 +164,7 @@ export default class WebSocketWrapper {
   }
 
   get onclose() {
-    return [...this._onclose][0];
+    return Array.from(this._onclose)[0];
   }
 
   set onclose(listener) {
@@ -173,7 +173,7 @@ export default class WebSocketWrapper {
   }
 
   get onerror() {
-    return [...this._onerror][0];
+    return Array.from(this._onerror)[0];
   }
 
   set onerror(listener) {
@@ -182,7 +182,7 @@ export default class WebSocketWrapper {
   }
 
   get onmessage() {
-    return [...this._onmessage][0];
+    return Array.from(this._onmessage)[0];
   }
 
   set onmessage(listener) {
@@ -191,7 +191,7 @@ export default class WebSocketWrapper {
   }
 
   get onopen() {
-    return [...this._onopen][0];
+    return Array.from(this._onopen)[0];
   }
 
   set onopen(listener) {
