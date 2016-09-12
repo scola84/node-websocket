@@ -128,7 +128,7 @@ export default class WebSocketWrapper {
   }
 
   _close(event) {
-    this._unbindSocket();
+    this._clearSocket();
 
     if (this._attempts === 0 || this._attempts === this.maxAttempts) {
       event.final = this._attempts === this.maxAttempts;
