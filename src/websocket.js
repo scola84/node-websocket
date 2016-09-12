@@ -28,6 +28,9 @@ export default class WebSocketWrapper {
   }
 
   open() {
+    this._clearSocket();
+    this._clearTimeout();
+
     this._websocket = new this._class(this._url, this._protocols);
 
     this._websocket.binaryType = this._binaryType;
@@ -37,15 +40,27 @@ export default class WebSocketWrapper {
     this._bindSocket();
   }
 
+  _clearSocket() {
+    if (this._websocket) {
+      this._unbindSocket();
+      this._websocket = null;
+    }
+  }
+
+  _clearTimeout() {
+    if (this._timeout) {
+      clearTimeout(this._timeout);
+      this._timeout = null;
+    }
+  }
+
   close(code, reason) {
-    this._unbindSocket();
-    this._websocket.close(code, reason);
-
-    clearTimeout(this._timeout);
-
-    this._websocket = null;
     this._attempts = 0;
-    this._timeout = null;
+
+    this._clearSocket();
+    this._clearTimeout();
+
+    this._websocket.close(code, reason);
   }
 
   send(data) {
