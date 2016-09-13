@@ -40,31 +40,21 @@ export default class WebSocketWrapper {
     this._bindSocket();
   }
 
-  _clearSocket() {
-    if (this._websocket) {
-      this._unbindSocket();
-      this._websocket = null;
-    }
-  }
-
-  _clearTimeout() {
-    if (this._timeout) {
-      clearTimeout(this._timeout);
-      this._timeout = null;
-    }
-  }
-
   close(code, reason) {
+    if (this._websocket) {
+      this._websocket.close(code, reason);
+    }
+
     this._attempts = 0;
 
     this._clearSocket();
     this._clearTimeout();
-
-    this._websocket.close(code, reason);
   }
 
   send(data) {
-    this._websocket.send(data);
+    if (this._websocket) {
+      this._websocket.send(data);
+    }
   }
 
   addEventListener(type, listener) {
@@ -101,6 +91,20 @@ export default class WebSocketWrapper {
     this._websocket.removeEventListener('open', this._handleOpen);
   }
 
+  _clearSocket() {
+    if (this._websocket) {
+      this._unbindSocket();
+      this._websocket = null;
+    }
+  }
+
+  _clearTimeout() {
+    if (this._timeout) {
+      clearTimeout(this._timeout);
+      this._timeout = null;
+    }
+  }
+
   _open(event) {
     event.attempts = this._attempts;
 
@@ -118,7 +122,7 @@ export default class WebSocketWrapper {
   }
 
   _error(event) {
-    if (this._websocket.readyState === this._websocket.CLOSED) {
+    if (this.readyState === this.CLOSED) {
       return;
     }
 
@@ -162,20 +166,23 @@ export default class WebSocketWrapper {
   }
 
   get binaryType() {
-    return this._websocket.binaryType;
+    return this._websocket && this._websocket.binaryType;
   }
 
   set binaryType(value) {
     this._binaryType = value;
-    this._websocket.binaryType = value;
+
+    if (this._websocket) {
+      this._websocket.binaryType = value;
+    }
   }
 
   get bufferedAmount() {
-    return this._websocket.bufferedAmount;
+    return this._websocket && this._websocket.bufferedAmount;
   }
 
   get extensions() {
-    return this._websocket.extensions;
+    return this._websocket && this._websocket.extensions;
   }
 
   get onclose() {
@@ -215,30 +222,30 @@ export default class WebSocketWrapper {
   }
 
   get protocol() {
-    return this._websocket.protocol;
+    return this._websocket && this._websocket.protocol;
   }
 
   get readyState() {
-    return this._websocket.readyState;
+    return this._websocket ? this._websocket.readyState : -1;
   }
 
   get url() {
-    return this._websocket.url;
+    return this._websocket && this._websocket.url;
   }
 
   get CONNECTING() {
-    return this._websocket.CONNECTING;
+    return this._websocket && this._websocket.CONNECTING;
   }
 
   get OPEN() {
-    return this._websocket.OPEN;
+    return this._websocket && this._websocket.OPEN;
   }
 
   get CLOSING() {
-    return this._websocket.CLOSING;
+    return this._websocket && this._websocket.CLOSING;
   }
 
   get CLOSED() {
-    return this._websocket.CLOSED;
+    return this._websocket && this._websocket.CLOSED;
   }
 }
