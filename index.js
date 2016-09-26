@@ -1,1 +1,1 @@
-export { default as WebSocket } from './src/websocket';
+export { default as Reconnector } from './src/reconnector';
