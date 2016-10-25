@@ -126,6 +126,11 @@ export default class Reconnector extends EventEmitter {
       }
     }
 
-    this._timeout = setTimeout(() => this.open(), delay * 1000);
+    event.attempt = this._attempts;
+    event.delay = delay * 1000;
+
+    this._timeout = setTimeout(() => this.open(), event.delay);
+
+    this.emit('reconnect', event);
   }
 }
