@@ -1,6 +1,6 @@
 {
   "name": "@scola/websocket",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Reconnectable WebSocket",
   "repository": "github:scola84/node-websocket",
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
