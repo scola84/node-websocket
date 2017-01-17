@@ -20,34 +20,58 @@ export default class Reconnector extends EventEmitter {
     this._handleOpen = (e) => this._open(e);
   }
 
-  class(value) {
+  class(value = null) {
+    if (value === null) {
+      return this._class;
+    }
+
     this._class = value;
     return this;
   }
 
-  url(value) {
+  url(value = null) {
+    if (value === null) {
+      return this._url;
+    }
+
     this._url = value;
     return this;
   }
 
-  protocols(value) {
+  protocols(value = null) {
+    if (value === null) {
+      return this._protocols;
+    }
+
     this._protocols = value;
     return this;
   }
 
-  options(value) {
+  options(value = null) {
+    if (value === null) {
+      return this._options;
+    }
+
     this._options = value;
     return this;
   }
 
-  codes(value) {
+  codes(value = null) {
+    if (value === null) {
+      return this._codes;
+    }
+
     this._codes = value;
     return this;
   }
 
-  attempts(value) {
+  attempts(value = null) {
+    if (value === null) {
+      return this._maxAttempts;
+    }
+
     this._maxAttempts = value;
-    return;
+    return this;
   }
 
   open() {
