@@ -80,6 +80,10 @@ export default class Reconnector extends EventEmitter {
     this._websocket = new this._class(this._url, this._protocols,
       this._options);
 
+    if (!this._websocket.removeEventListener) {
+      this._websocket.removeEventListener = this._websocket.removeListener;
+    }
+
     this._bindSocketError();
     this._bindSocket();
   }
@@ -90,13 +94,8 @@ export default class Reconnector extends EventEmitter {
   }
 
   _unbindSocket() {
-    if (this._websocket.removeEventListener) {
-      this._websocket.removeEventListener('close', this._handleClose);
-      this._websocket.removeEventListener('open', this._handleOpen);
-    } else {
-      this._websocket.removeListener('close', this._handleClose);
-      this._websocket.removeListener('open', this._handleOpen);
-    }
+    this._websocket.removeEventListener('close', this._handleClose);
+    this._websocket.removeEventListener('open', this._handleOpen);
   }
 
   _bindSocketError() {
@@ -104,11 +103,7 @@ export default class Reconnector extends EventEmitter {
   }
 
   _unbindSocketError() {
-    if (this._websocket.removeEventListener) {
-      this._websocket.removeEventListener('error', this._handleError);
-    } else {
-      this._websocket.removeListener('error', this._handleError);
-    }
+    this._websocket.removeEventListener('error', this._handleError);
   }
 
   _close(event) {
