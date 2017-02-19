@@ -13,6 +13,7 @@ export default class Reconnector extends EventEmitter {
     this._maxAttempts = 10;
 
     this._attempts = 0;
+    this._factor = 1;
     this._timeout = null;
 
     this._handleClose = (e) => this._close(e);
@@ -74,6 +75,15 @@ export default class Reconnector extends EventEmitter {
     return this;
   }
 
+  factor(value = null) {
+    if (value === null) {
+      return this._factor;
+    }
+
+    this._factor = value;
+    return this;
+  }
+
   open() {
     clearTimeout(this._timeout);
 
@@ -84,32 +94,26 @@ export default class Reconnector extends EventEmitter {
       this._websocket.removeEventListener = this._websocket.removeListener;
     }
 
-    this._bindSocketError();
     this._bindSocket();
   }
 
   _bindSocket() {
     this._websocket.addEventListener('close', this._handleClose);
+    this._websocket.addEventListener('error', this._handleError);
     this._websocket.addEventListener('open', this._handleOpen);
   }
 
   _unbindSocket() {
     this._websocket.removeEventListener('close', this._handleClose);
-    this._websocket.removeEventListener('open', this._handleOpen);
-  }
-
-  _bindSocketError() {
-    this._websocket.addEventListener('error', this._handleError);
-  }
-
-  _unbindSocketError() {
     this._websocket.removeEventListener('error', this._handleError);
+    this._websocket.removeEventListener('open', this._handleOpen);
   }
 
   _close(event) {
     this._unbindSocket();
 
     if (this._codes.indexOf(event.code) !== -1 &&
+      this._maxAttempts === -1 ||
       this._attempts < this._maxAttempts) {
 
       this._reconnect(event);
@@ -120,6 +124,10 @@ export default class Reconnector extends EventEmitter {
   }
 
   _error(error) {
+    if (error.code === 'ECONNREFUSED') {
+      return;
+    }
+
     this.emit('error', error);
   }
 
@@ -128,13 +136,12 @@ export default class Reconnector extends EventEmitter {
     event.socket = this._websocket;
 
     this._attempts = 0;
-    this._unbindSocketError();
 
     this.emit('open', event);
   }
 
   _reconnect(event) {
-    let delay = Math.pow(2, this._attempts);
+    let delay = Math.pow(this._factor, this._attempts);
     this._attempts += 1;
 
     if (event.reason) {
