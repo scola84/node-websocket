@@ -4,7 +4,7 @@ export default class Reconnector extends EventEmitter {
   constructor() {
     super();
 
-    this._class = null;
+    this._factory = null;
     this._url = null;
     this._protocols = null;
     this._options = null;
@@ -17,16 +17,16 @@ export default class Reconnector extends EventEmitter {
     this._timeout = null;
 
     this._handleClose = (e) => this._close(e);
-    this._handleError = (e) => this._error(e);
+    this._handleError = () => {};
     this._handleOpen = (e) => this._open(e);
   }
 
-  class(value = null) {
+  factory(value = null) {
     if (value === null) {
-      return this._class;
+      return this._factory;
     }
 
-    this._class = value;
+    this._factory = value;
     return this;
   }
 
@@ -87,12 +87,12 @@ export default class Reconnector extends EventEmitter {
   open() {
     clearTimeout(this._timeout);
 
-    this._websocket = new this._class(this._url, this._protocols,
-      this._options);
+    this._websocket = this._factory(this._url,
+      this._protocols, this._options);
 
-    if (!this._websocket.removeEventListener) {
-      this._websocket.removeEventListener = this._websocket.removeListener;
-    }
+    this._websocket.removeEventListener =
+      this._websocket.removeEventListener ||
+      this._websocket.removeListener;
 
     this._bindSocket();
   }
@@ -112,23 +112,16 @@ export default class Reconnector extends EventEmitter {
   _close(event) {
     this._unbindSocket();
 
-    if (this._codes.indexOf(event.code) !== -1 &&
+    const reconnect = this._codes.indexOf(event.code) !== -1 &&
       this._maxAttempts === -1 ||
-      this._attempts < this._maxAttempts) {
+      this._attempts < this._maxAttempts;
 
+    if (reconnect) {
       this._reconnect(event);
       return;
     }
 
     this.emit('close');
-  }
-
-  _error(error) {
-    if (error.code === 'ECONNREFUSED') {
-      return;
-    }
-
-    this.emit('error', error);
   }
 
   _open(event) {
@@ -146,17 +139,9 @@ export default class Reconnector extends EventEmitter {
 
     if (event.reason) {
       const match = event.reason.match(/delay=(\d+)/);
-
-      if (match) {
-        delay = Number(match[1]);
-      }
+      delay = match ? Number(match[1]) : delay;
     }
 
-    event.attempt = this._attempts;
-    event.delay = delay * 1000;
-
-    this._timeout = setTimeout(() => this.open(), event.delay);
-
-    this.emit('reconnect', event);
+    this._timeout = setTimeout(() => this.open(), delay * 1000);
   }
 }
