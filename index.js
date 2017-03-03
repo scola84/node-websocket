@@ -1,1 +1,5 @@
-export { default as Reconnector } from './src/reconnector';
+import Reconnector from './src/reconnector';
+
+export {
+  Reconnector
+};
