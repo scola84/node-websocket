@@ -5,6 +5,6 @@
   "repository": "github:scola84/node-websocket",
   "author": "M.C. van den Boogaart <scola@kvdb.name>",
   "license": "MIT",
-  "main": "./dist/websocket.js",
+  "main": "./index.js",
   "jsnext:main": "./index.js"
 }
