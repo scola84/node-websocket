@@ -116,7 +116,7 @@ export default class Reconnector extends EventEmitter {
       this._maxAttempts === -1 ||
       this._attempts < this._maxAttempts;
 
-    if (reconnect) {
+    if (reconnect === true) {
       this._reconnect(event);
       return;
     }
@@ -137,9 +137,9 @@ export default class Reconnector extends EventEmitter {
     let delay = Math.pow(this._factor, this._attempts);
     this._attempts += 1;
 
-    if (event.reason) {
+    if (typeof event.reason === 'string') {
       const match = event.reason.match(/delay=(\d+)/);
-      delay = match ? Number(match[1]) : delay;
+      delay = match === null ? delay : Number(match[1]);
     }
 
     this._timeout = setTimeout(() => this.open(), delay * 1000);
