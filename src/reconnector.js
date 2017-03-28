@@ -71,6 +71,10 @@ export default class Reconnector extends EventEmitter {
       return this._maxAttempts;
     }
 
+    if (value === true) {
+      return this._attempts;
+    }
+
     this._maxAttempts = value;
     return this;
   }
@@ -125,10 +129,8 @@ export default class Reconnector extends EventEmitter {
   }
 
   _open(event) {
-    event.attempts = this._attempts;
-    event.socket = this._websocket;
-
     this._attempts = 0;
+    event.socket = this._websocket;
 
     this.emit('open', event);
   }
@@ -142,6 +144,10 @@ export default class Reconnector extends EventEmitter {
       delay = match === null ? delay : Number(match[1]);
     }
 
-    this._timeout = setTimeout(() => this.open(), delay * 1000);
+    this._timeout = setTimeout(() => {
+      this.open();
+    }, delay * 1000);
+
+    this.emit('reconnect', event);
   }
 }
