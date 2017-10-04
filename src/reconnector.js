@@ -125,7 +125,7 @@ export default class Reconnector extends EventEmitter {
       return;
     }
 
-    this.emit('close');
+    this.emit('close', event);
   }
 
   _open(event) {
